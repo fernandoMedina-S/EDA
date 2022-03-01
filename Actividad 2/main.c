@@ -1,5 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include <fcntl.h>
+
 #define SEPARADOR '|'
 
 void capturar_usuario();
@@ -11,6 +16,7 @@ void selecPrincipal();
 char nombre_archivo[20];
 FILE* archivo;
 int contador;
+int Archivo, tamanio;
 
 
 int main()
@@ -20,17 +26,18 @@ int main()
     printf("Ingresa el nombre del archivo a guardar:\n");
     gets(nombre_archivo);
 
-    archivo = fopen(nombre_archivo, "a+");
+    Archivo = open(nombre_archivo, O_RDWR);
 
-    if(archivo == NULL)
+    if(Archivo == -1)
     {
-        printf("Error!");
+        printf("Error! %d", errno);
+        perror("Program");
         exit(1);
     }
 
     selecPrincipal();
 
-    fclose(archivo);
+    close(Archivo);
     return 0;
 }
 
@@ -80,7 +87,7 @@ void selecPrincipal()
 
 void capturar_usuario()
 {
-
+    char buff[1024];
     int num;
     char nombre[30];
     char rfc[14];
@@ -115,85 +122,39 @@ void capturar_usuario()
     gets(fisioterapeuta);
 
 
-    fprintf(archivo, "%s|%s|%s|%s|%s|%s|%s|\n", nombre, rfc, direccion, ciudad, codigo_postal, lesion, fisioterapeuta);
+    tamanio = write(Archivo, nombre, strlen(nombre));
+    tamanio+= write(Archivo, "|", strlen("|"));
+    tamanio+= write(Archivo, rfc, strlen(rfc));
+    tamanio+= write(Archivo, "|", strlen("|"));
+    tamanio+= write(Archivo, direccion, strlen(direccion));
+    tamanio+= write(Archivo, "|", strlen("|"));
+    tamanio+= write(Archivo, ciudad, strlen(ciudad));
+    tamanio+= write(Archivo, "|", strlen("|"));
+    tamanio+= write(Archivo, codigo_postal, strlen(codigo_postal));
+    tamanio+= write(Archivo, "|", strlen("|"));
+    tamanio+= write(Archivo, lesion, strlen(lesion));
+    tamanio+= write(Archivo, "|", strlen("|"));
+    tamanio+= write(Archivo, fisioterapeuta, strlen(fisioterapeuta));
+    tamanio+= write(Archivo, "|", strlen("|"));
+
+
     system("pause");
 
 
 }
 
-void leerUsuarios(){
-    fseek(archivo, 0, 0);
+void leerUsuarios()
+{
+
     int i, aux=0;
-    char nombre[30];
-    char rfc[14];
-    char direccion[30];
-    char ciudad[20];
-    char codigo_postal[10];
-    char lesion[35];
-    char fisioterapeuta[30];
+    int sz;
 
     char buffer[1024];
-    //|| buffer[i]!='\0' || buffer[i]!='\n'
-    while((fgets(buffer, 1024, archivo))){
+
+    sz = read(Archivo, buffer, 1024);
+    printf("%d", sz);
 
 
-
-
-
-        if(buffer[0]==' '){
-            break;
-        }
-        for(i=0; buffer[i]!=SEPARADOR; i++){
-            nombre[i] = buffer[i];
-        }
-        nombre[i] = '\0';
-        aux=i;
-
-        for(i=0; buffer[i]!=SEPARADOR; i++){
-            rfc[i] = buffer[i];
-        }
-        rfc[i] = '\0';
-        aux=i;
-
-        for(i=0; buffer[i]!=SEPARADOR; i++){
-            direccion[i] = buffer[i];
-        }
-        direccion[i] = '\0';
-        aux=i;
-
-        for(i=0; buffer[i]!=SEPARADOR; i++){
-            ciudad[i] = buffer[i];
-        }
-        ciudad[i] = '\0';
-        aux=i;
-
-        for(i=0; buffer[i]!=SEPARADOR; i++){
-            codigo_postal[i] = buffer[i];
-        }
-        codigo_postal[i] = '\0';
-        aux=i;
-
-        for(i=0; buffer[i]!=SEPARADOR; i++){
-            lesion[i] = buffer[i];
-        }
-        lesion[i] = '\0';
-        aux=i;
-
-        for(i=0; buffer[i]!=SEPARADOR; i++){
-            fisioterapeuta[i] = buffer[i];
-        }
-        fisioterapeuta[i] = '\0';
-        aux=i;
-
-        printf("Nombre: %s\n", nombre);
-        printf("RFC: %s\n", rfc);
-        printf("Direccion: %s\n", direccion);
-        printf("Ciudad: %s\n", ciudad);
-        printf("Codigo postal: %s\n", codigo_postal);
-        printf("Lesion: %s\n", lesion);
-        printf("Fisioterapeuta: %s\n", fisioterapeuta);
-        printf("\n==========================\n");
-        system("pause");
-    }
+    system("pause");
 
 }
