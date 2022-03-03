@@ -4,6 +4,7 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include <fcntl.h>
+#define PERMISO 777
 
 #define SEPARADOR '|'
 
@@ -14,9 +15,8 @@ void selecPrincipal();
 
 
 char nombre_archivo[20];
-FILE* archivo;
 int contador;
-int Archivo, tamanio;
+int Archivo, tamanio=0;
 
 
 int main()
@@ -26,13 +26,15 @@ int main()
     printf("Ingresa el nombre del archivo a guardar:\n");
     gets(nombre_archivo);
 
-    Archivo = open(nombre_archivo, O_RDWR);
+    Archivo = open(nombre_archivo, O_RDWR | O_APPEND);
 
     if(Archivo == -1)
     {
-        printf("Error! %d", errno);
-        perror("Program");
-        exit(1);
+    	printf("Creando nuevo archivo...\n");
+        Archivo = creat(nombre_archivo, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		printf("Error! %d\n", errno);
+        perror("Program\n");
+        system("pause");
     }
 
     selecPrincipal();
@@ -75,7 +77,6 @@ void selecPrincipal()
             break;
         case 3:
             continuar=0;
-            fprintf(archivo, "\n");
             break;
         default:
             printf("Ingresa una opcion valida\n");
@@ -97,7 +98,7 @@ void capturar_usuario()
     char lesion[35];
     char fisioterapeuta[30];
 
-
+	lseek(Archivo, tamanio, SEEK_SET);
 
 
     printf("Ingresa el nombre del cliente:\n");
@@ -122,7 +123,7 @@ void capturar_usuario()
     gets(fisioterapeuta);
 
 
-    tamanio = write(Archivo, nombre, strlen(nombre));
+    tamanio += write(Archivo, nombre, strlen(nombre));
     tamanio+= write(Archivo, "|", strlen("|"));
     tamanio+= write(Archivo, rfc, strlen(rfc));
     tamanio+= write(Archivo, "|", strlen("|"));
@@ -145,14 +146,24 @@ void capturar_usuario()
 
 void leerUsuarios()
 {
-
+	lseek(Archivo, 0, SEEK_SET);
     int i, aux=0;
     int sz;
-
+	char auxC;
     char buffer[1024];
 
     sz = read(Archivo, buffer, 1024);
-    printf("%d", sz);
+
+    for(i=0; i<strlen(buffer); i++){
+    	auxC=buffer[i];
+
+    	if(auxC == 124){
+			printf("\n");
+		}else if(auxC != 124){
+
+			printf("%c", auxC);
+		}
+	}
 
 
     system("pause");
