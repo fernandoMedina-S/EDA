@@ -32,8 +32,8 @@ int main()
     {
     	printf("Creando nuevo archivo...\n");
         Archivo = creat(nombre_archivo, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-		printf("Error! %d\n", errno);
-        perror("Program\n");
+		//printf("Error! %d\n", errno);
+        //perror("Program\n");
         system("pause");
     }
 
@@ -98,7 +98,7 @@ void capturar_usuario()
     char lesion[35];
     char fisioterapeuta[30];
 
-	lseek(Archivo, tamanio, SEEK_SET);
+	lseek(Archivo, 0L, SEEK_END);
 
 
     printf("Ingresa el nombre del cliente:\n");
@@ -123,20 +123,20 @@ void capturar_usuario()
     gets(fisioterapeuta);
 
 
-    tamanio += write(Archivo, nombre, strlen(nombre));
-    tamanio+= write(Archivo, "|", strlen("|"));
-    tamanio+= write(Archivo, rfc, strlen(rfc));
-    tamanio+= write(Archivo, "|", strlen("|"));
-    tamanio+= write(Archivo, direccion, strlen(direccion));
-    tamanio+= write(Archivo, "|", strlen("|"));
-    tamanio+= write(Archivo, ciudad, strlen(ciudad));
-    tamanio+= write(Archivo, "|", strlen("|"));
-    tamanio+= write(Archivo, codigo_postal, strlen(codigo_postal));
-    tamanio+= write(Archivo, "|", strlen("|"));
-    tamanio+= write(Archivo, lesion, strlen(lesion));
-    tamanio+= write(Archivo, "|", strlen("|"));
-    tamanio+= write(Archivo, fisioterapeuta, strlen(fisioterapeuta));
-    tamanio+= write(Archivo, "|", strlen("|"));
+    write(Archivo, nombre, strlen(nombre));
+    write(Archivo, "|", strlen("|"));
+    write(Archivo, rfc, strlen(rfc));
+    write(Archivo, "|", strlen("|"));
+    write(Archivo, direccion, strlen(direccion));
+    write(Archivo, "|", strlen("|"));
+    write(Archivo, ciudad, strlen(ciudad));
+    write(Archivo, "|", strlen("|"));
+    write(Archivo, codigo_postal, strlen(codigo_postal));
+    write(Archivo, "|", strlen("|"));
+    write(Archivo, lesion, strlen(lesion));
+    write(Archivo, "|", strlen("|"));
+    write(Archivo, fisioterapeuta, strlen(fisioterapeuta));
+    write(Archivo, "|", strlen("|"));
 
 
     system("pause");
