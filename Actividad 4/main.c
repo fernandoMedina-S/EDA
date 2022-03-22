@@ -10,6 +10,8 @@ int Archivo, Archivo_indices;
 
 int menuPrincipal();
 void selecPrincipal();
+void capturar_corredor();
+void leer_corredor();
 
 
 
@@ -75,10 +77,10 @@ void selecPrincipal()
         switch(menuPrincipal())
         {
         case 1:
-
+            capturar_corredor();
             break;
         case 2:
-
+            leer_corredor();
             break;
         case 3:
             continuar=0;
@@ -89,4 +91,65 @@ void selecPrincipal()
         }
     }
     while(continuar == 1);
+}
+
+void capturar_corredor(){
+
+    lseek(Archivo, 0L, SEEK_END);
+
+    char numero_participacion[4];
+    char nombre_atleta[10];
+    char direccion_atleta[10];
+    char ciudad[10];
+    char nacionalidad[10];
+    char tiempo_clasificacion[10];
+    char buffer[1024];
+
+
+    printf("Ingrese la siguiente informacion requerida:\n");
+    printf("Numero de participacion: ");
+    gets(numero_participacion);
+    strcat(buffer, numero_participacion);
+    strcat(buffer, "|");
+
+    printf("\nNombre del atleta: ");
+    gets(nombre_atleta);
+    strcat(buffer, nombre_atleta);
+    strcat(buffer, "|");
+
+    printf("\Direccion: ");
+    gets(direccion_atleta);
+    strcat(buffer, direccion_atleta);
+    strcat(buffer, "|");
+
+    printf("\nCiudad: ");
+    gets(ciudad);
+    strcat(buffer, ciudad);
+    strcat(buffer, "|");
+
+    printf("\nNacionalidad: ");
+    gets(nacionalidad);
+    strcat(buffer, nacionalidad);
+    strcat(buffer, "|");
+
+    printf("\nTiempo de clasificacion: ");
+    gets(tiempo_clasificacion);
+    strcat(buffer, tiempo_clasificacion);
+    strcat(buffer, "|");
+
+
+    write(Archivo, buffer, 64);
+    printf("\nBuffer: %s\n", buffer);
+    system("pause");
+}
+
+void leer_corredor(){
+    lseek(Archivo, 0, SEEK_SET);
+    char buffer[1024];
+
+    while((read(Archivo, buffer, 64)>=1)){
+        printf("Linea de buffer: %s\n", buffer);
+    }
+
+    system("pause");
 }
