@@ -5,6 +5,8 @@
 #include<sys/stat.h>
 #include <fcntl.h>
 
+#define TAM_REG 64
+
 char nombre_archivo[50];
 int Archivo, Archivo_indices;
 
@@ -12,6 +14,9 @@ int menuPrincipal();
 void selecPrincipal();
 void capturar_corredor();
 void leer_corredor();
+void escribir_encabezado();
+short leer_encabezado();
+char* formatoTiempo(char* original);
 
 
 
@@ -32,9 +37,6 @@ int main(){
     strcpy(nombre_archivo_completo, nombre_archivo);
     strcat(nombre_archivo_completo, extension);
 
-    printf("%s\n", archivo_indices);
-    system("pause");
-
     Archivo = open(nombre_archivo_completo, O_RDWR | O_APPEND);
     Archivo_indices = open(archivo_indices, O_RDWR | O_APPEND);
 
@@ -43,6 +45,7 @@ int main(){
         printf("Creando nuevo archivo...\n");
         Archivo = creat(nombre_archivo_completo, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         Archivo_indices = creat(archivo_indices, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        escribir_encabezado();
     }
 
     selecPrincipal();
@@ -59,7 +62,7 @@ int menuPrincipal()
     system("cls");
     int opcion;
 
-    printf("1.- Ingresar cancion\n");
+    printf("1.- Ingresar atleta\n");
     printf("2.- Ver lista\n");
     printf("3.- Salir\n");
 
@@ -83,6 +86,7 @@ void selecPrincipal()
             leer_corredor();
             break;
         case 3:
+            escribir_encabezado();
             continuar=0;
             break;
         default:
@@ -96,28 +100,38 @@ void selecPrincipal()
 void capturar_corredor(){
 
     lseek(Archivo, 0L, SEEK_END);
+    short pos_guardada, pos_final;
 
-    char numero_participacion[4];
-    char nombre_atleta[10];
+    char numero_participacion[5];
+    char nombre_atleta[20];
     char direccion_atleta[10];
     char ciudad[10];
     char nacionalidad[10];
-    char tiempo_clasificacion[10];
+    char tiempo_clasificacion[7];
     char buffer[1024];
+    char *buffAux;
+
+    char tiempo_carrera_nuevo[7];
 
 
     printf("Ingrese la siguiente informacion requerida:\n");
     printf("Numero de participacion: ");
     gets(numero_participacion);
     strcat(buffer, numero_participacion);
-    strcat(buffer, "|");
+
+
+
+    printf("\nTiempo de clasificacion: ");
+    gets(tiempo_clasificacion);
+    strcat(buffer, tiempo_clasificacion);
+
 
     printf("\nNombre del atleta: ");
     gets(nombre_atleta);
     strcat(buffer, nombre_atleta);
     strcat(buffer, "|");
 
-    printf("\Direccion: ");
+    printf("\nDireccion: ");
     gets(direccion_atleta);
     strcat(buffer, direccion_atleta);
     strcat(buffer, "|");
@@ -132,24 +146,85 @@ void capturar_corredor(){
     strcat(buffer, nacionalidad);
     strcat(buffer, "|");
 
-    printf("\nTiempo de clasificacion: ");
-    gets(tiempo_clasificacion);
-    strcat(buffer, tiempo_clasificacion);
-    strcat(buffer, "|");
+    printf("\nParticipacion en esta carrera: ");
+    gets(tiempo_carrera_nuevo);
 
 
     write(Archivo, buffer, 64);
-    printf("\nBuffer: %s\n", buffer);
+    escribir_encabezado();
+    pos_guardada = leer_encabezado();
+    pos_guardada = ((pos_guardada -1) * TAM_REG) + 33;
+    buffAux = formatoTiempo(tiempo_carrera_nuevo);
+
+    lseek(Archivo_indices, 0L, SEEK_END);
+    write(Archivo_indices, numero_participacion, strlen(numero_participacion));
+    write(Archivo_indices, &pos_guardada, sizeof(short));
+    write(Archivo_indices, buffAux, sizeof(buffAux));
     system("pause");
 }
 
 void leer_corredor(){
-    lseek(Archivo, 0, SEEK_SET);
+    lseek(Archivo, 32L, SEEK_SET);
     char buffer[1024];
 
     while((read(Archivo, buffer, 64)>=1)){
         printf("Linea de buffer: %s\n", buffer);
     }
 
+
+
     system("pause");
+}
+
+void escribir_encabezado(){
+    lseek(Archivo, 0L, SEEK_SET);
+    short registros=0;
+    char relleno[31];
+    int i;
+
+    for(i=0; i<30; i++){
+        relleno[i] = ' ';
+    }
+
+
+    char* buffer[65];
+
+    lseek(Archivo, 32L, SEEK_SET);
+    while((read(Archivo, buffer, 64)>=1)){
+        registros++;
+    }
+
+
+    lseek(Archivo, 0L, SEEK_SET);
+
+    //Escribirlo en archivo
+    //printf("Registros para guardar en encabezado: %d\n", registros);
+    write(Archivo, &registros, sizeof(registros));
+    write(Archivo, relleno, 30);
+
+}
+
+short leer_encabezado(){
+    lseek(Archivo, 0, SEEK_SET);
+    short registros;
+
+    char encabezado[32];
+
+    read(Archivo, &registros, 2);
+
+    return registros;
+}
+
+char* formatoTiempo(char* original){
+    char formateada[6];
+    int i;
+    //9:10:22
+    formateada[0] = original[0];
+    formateada[1] = original[2];
+    formateada[2] = original[3];
+    formateada[3] = original[5];
+    formateada[4] = original[6];
+    formateada[5] = '\0';
+
+    return formateada;
 }
