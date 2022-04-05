@@ -17,13 +17,25 @@ void leer_corredor();
 void escribir_encabezado();
 short leer_encabezado();
 char* formatoTiempo(char* original);
+void agrandar_lista();
+void leer_indices_primarios();
 
+typedef struct _indice_primario{
+    char num_participacion[5];
+    short nrr;
+    char tiempo[6];
+}Indice_primario;
 
+int tam = 2;
+
+Indice_primario* indices_primarios;
 
 int main(){
 
     char* extension = ".txt";
     char* lista_prefijo = "_indices.txt";
+
+    indices_primarios = malloc(tam * sizeof(Indice_primario));
 
     printf("Ingresa el nombre del archivo a guardar:\n");
     gets(nombre_archivo);
@@ -64,7 +76,8 @@ int menuPrincipal()
 
     printf("1.- Ingresar atleta\n");
     printf("2.- Ver lista\n");
-    printf("3.- Salir\n");
+    printf("3.- Mostrar indices primarios\n");
+    printf("4.- Salir\n");
 
     scanf("%d", &opcion);
     fflush(stdin);
@@ -86,6 +99,9 @@ void selecPrincipal()
             leer_corredor();
             break;
         case 3:
+            leer_indices_primarios();
+            break;
+        case 4:
             escribir_encabezado();
             continuar=0;
             break;
@@ -98,18 +114,22 @@ void selecPrincipal()
 }
 
 void capturar_corredor(){
-
+    escribir_encabezado();
     lseek(Archivo, 0L, SEEK_END);
     short pos_guardada, pos_final;
+    int i;
 
-    char numero_participacion[5];
+    char numero_participacion[4];
     char nombre_atleta[20];
     char direccion_atleta[10];
     char ciudad[10];
     char nacionalidad[10];
     char tiempo_clasificacion[7];
     char buffer[1024];
-    char *buffAux;
+    char buffAux[10];
+    for(i=0; i<1024; i++){
+        buffer[i] = NULL;
+    }
 
     char tiempo_carrera_nuevo[7];
 
@@ -118,18 +138,19 @@ void capturar_corredor(){
     printf("Numero de participacion: ");
     gets(numero_participacion);
     strcat(buffer, numero_participacion);
-
-
+    printf("buffer1: %s\n", buffer);
 
     printf("\nTiempo de clasificacion: ");
     gets(tiempo_clasificacion);
-    strcat(buffer, tiempo_clasificacion);
+    strcat(buffer, formatoTiempo(tiempo_clasificacion));
+
 
 
     printf("\nNombre del atleta: ");
     gets(nombre_atleta);
     strcat(buffer, nombre_atleta);
     strcat(buffer, "|");
+
 
     printf("\nDireccion: ");
     gets(direccion_atleta);
@@ -150,16 +171,21 @@ void capturar_corredor(){
     gets(tiempo_carrera_nuevo);
 
 
+    printf("Buffer: %s\n", buffer);
     write(Archivo, buffer, 64);
     escribir_encabezado();
     pos_guardada = leer_encabezado();
     pos_guardada = ((pos_guardada -1) * TAM_REG) + 33;
-    buffAux = formatoTiempo(tiempo_carrera_nuevo);
+
+    strcat(buffAux, formatoTiempo(tiempo_carrera_nuevo));
+    printf("tiempo carrera: %d\n", pos_guardada);
+
+
 
     lseek(Archivo_indices, 0L, SEEK_END);
     write(Archivo_indices, numero_participacion, strlen(numero_participacion));
     write(Archivo_indices, &pos_guardada, sizeof(short));
-    write(Archivo_indices, buffAux, sizeof(buffAux));
+    write(Archivo_indices, buffAux, strlen(buffAux));
     system("pause");
 }
 
@@ -208,16 +234,15 @@ short leer_encabezado(){
     lseek(Archivo, 0, SEEK_SET);
     short registros;
 
-    char encabezado[32];
-
     read(Archivo, &registros, 2);
 
     return registros;
 }
 
 char* formatoTiempo(char* original){
-    char formateada[6];
-    int i;
+    char* formateada= malloc(6 * sizeof(char));;
+
+
     //9:10:22
     formateada[0] = original[0];
     formateada[1] = original[2];
@@ -226,5 +251,34 @@ char* formatoTiempo(char* original){
     formateada[4] = original[6];
     formateada[5] = '\0';
 
+
+
     return formateada;
 }
+
+void agrandar_lista(){
+    tam = 2 * tam;
+    indices_primarios = realloc(indices_primarios, tam * sizeof(Indice_primario));
+}
+
+void leer_indices_primarios(){
+
+    char numero_participacion[5];
+    char buffer[1024];
+    short nrr;
+    char tiempo_carrera[6];
+    lseek(Archivo_indices, 0, SEEK_SET);
+    read(Archivo_indices, numero_participacion, 4);
+    numero_participacion[4] = '\0';
+
+    read(Archivo_indices, &nrr, sizeof(short));
+    read(Archivo_indices, buffer, 1);
+    read(Archivo_indices, tiempo_carrera, 5);
+    tiempo_carrera[5] = '\0';
+
+    printf("NRR: %d\n", nrr);
+    printf("Tiempo: carrera: %s\n", tiempo_carrera);
+
+    system("pause");
+}
+
