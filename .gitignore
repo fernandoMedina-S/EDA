@@ -1,4 +1,5 @@
 *.d
+*.txt
 
 # Object files
 *.o
