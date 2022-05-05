@@ -6,8 +6,8 @@
 #include <fcntl.h>
 
 #define TAM_REG 64
-
 char nombre_archivo[50];
+
 int Archivo, Archivo_indices;
 
 int menuPrincipal();
@@ -20,6 +20,9 @@ char* formatoTiempo(char* original);
 void agrandar_lista();
 void leer_indices_primarios();
 char* formatoTiempoReves(char* original);
+void imprimir_indices_primarios();
+void ordenar_lista();
+void escribir_indices_primarios();
 
 typedef struct _indice_primario
 {
@@ -55,6 +58,7 @@ int main()
 
     Archivo = open(nombre_archivo_completo, O_RDWR | O_APPEND);
     Archivo_indices = open(archivo_indices, O_RDWR | O_APPEND);
+    leer_indices_primarios(); //Paso los indices del archivo a ram
 
     if(Archivo == -1)
     {
@@ -103,9 +107,11 @@ void selecPrincipal()
             leer_corredor();
             break;
         case 3:
-            leer_indices_primarios();
+            imprimir_indices_primarios();
+            ordenar_lista();
             break;
         case 4:
+            escribir_indices_primarios();
             continuar=0;
             break;
         default:
@@ -186,11 +192,24 @@ void capturar_corredor()
     printf("tiempo carrera: %d\n", pos_guardada);
 
 
-
+    /*
     lseek(Archivo_indices, 0L, SEEK_END);
     write(Archivo_indices, numero_participacion, 4);
     write(Archivo_indices, &pos_guardada, sizeof(short));
     write(Archivo_indices, buffAux, strlen(buffAux));
+    */
+
+    Indice_primario *nuevo = (Indice_primario*)malloc(sizeof(Indice_primario));
+    nuevo->nrr = pos_guardada;
+    strcpy(nuevo->num_participacion, numero_participacion);
+    strcpy(nuevo->tiempo, buffAux);
+
+    if(contador_lista >= tam){
+            agrandar_lista();
+        }
+
+    indices_primarios[contador_lista++] = *nuevo;
+
     system("pause");
 }
 
@@ -268,45 +287,6 @@ char* formatoTiempo(char* original)
     return formateada;
 }
 
-void agrandar_lista()
-{
-    tam = 2 * tam;
-    indices_primarios = realloc(indices_primarios, tam * sizeof(Indice_primario));
-}
-
-void leer_indices_primarios()
-{
-
-    char numero_participacion[5];
-    char buffer[1024];
-    short nrr;
-    char tiempo_carrera[6];
-    char buffAux[10];
-
-    lseek(Archivo_indices, 0, SEEK_SET);
-    ;
-    while((read(Archivo_indices, numero_participacion, 4)) > 0)
-    {
-        numero_participacion[4] = '\0';
-
-        read(Archivo_indices, &nrr, sizeof(short));
-
-        read(Archivo_indices, tiempo_carrera, 5);
-        tiempo_carrera[5] = '\0';
-
-        strcat(buffAux, formatoTiempoReves(tiempo_carrera));
-
-        Indice_primario* nuevo =
-
-        printf("\nNumero de participacion: %s\n", numero_participacion);
-        printf("NRR: %d\n", nrr);
-        printf("Tiempo: carrera: %s\n", buffAux);
-        buffAux[0] = '\0';
-    }
-
-    system("pause");
-}
-
 char* formatoTiempoReves(char* original)
 {
     char* formateada= malloc(8 * sizeof(char));;
@@ -323,4 +303,86 @@ char* formatoTiempoReves(char* original)
     formateada[7] = '\0';
 
     return formateada;
+}
+
+void agrandar_lista()
+{
+    tam = 2 * tam;
+    indices_primarios = realloc(indices_primarios, tam * sizeof(Indice_primario));
+}
+
+void leer_indices_primarios()
+{
+
+    char numero_participacion[5];
+    char buffer[1024];
+    short nrr;
+    char tiempo_carrera[6];
+    char buffAux[10];
+    int i;
+
+    lseek(Archivo_indices, 0, SEEK_SET);
+
+    while((read(Archivo_indices, numero_participacion, 4)) > 0)
+    {
+        numero_participacion[4] = '\0';
+
+        read(Archivo_indices, &nrr, sizeof(short));
+
+        read(Archivo_indices, tiempo_carrera, 5);
+        tiempo_carrera[5] = '\0';
+
+        Indice_primario *nuevo = (Indice_primario*)malloc(sizeof(Indice_primario));
+
+        strcat(buffAux, formatoTiempoReves(tiempo_carrera));
+
+        nuevo->nrr = nrr;
+        strcpy(nuevo->num_participacion, numero_participacion);
+        strcpy(nuevo->tiempo, tiempo_carrera);
+
+        buffAux[0] = '\0';
+
+        if(contador_lista >= tam){
+            agrandar_lista();
+        }
+        indices_primarios[contador_lista++] = *nuevo;
+
+    }
+}
+
+
+void imprimir_indices_primarios(){
+    int i;
+    for(i=0; i<contador_lista; i++){
+        printf("Registro %d:\n", i+1);
+        printf("Ubicacion archivo: %d\n", indices_primarios[i].nrr);
+        printf("Tiempo de carrera: %s\n", formatoTiempoReves(indices_primarios[i].tiempo));
+        printf("Numero de participacion: %s\n\n", indices_primarios[i].num_participacion);
+    }
+    system("pause");
+}
+
+void ordenar_lista(){
+    Indice_primario aux;
+    int i, j;
+    for(i=0; i<contador_lista; i++){
+        for(j=0; j<contador_lista-1; j++){
+            if(strtol(indices_primarios[j].tiempo, NULL, 10) > strtol(indices_primarios[j+1].tiempo, NULL, 10)){
+                aux = indices_primarios[j];
+                indices_primarios[j] = indices_primarios[j+1];
+                indices_primarios[j+1] = aux;
+            }
+        }
+    }
+}
+
+void escribir_indices_primarios(){
+    int i;
+
+    lseek(Archivo_indices, 0L, SEEK_END);
+    for(i=0; i<contador_lista; i++){
+        write(Archivo_indices, indices_primarios[i].num_participacion, 4);
+        write(Archivo_indices, &indices_primarios[i].nrr, sizeof(short));
+        write(Archivo_indices, indices_primarios[i].tiempo, strlen(indices_primarios[i].tiempo));
+    }
 }
